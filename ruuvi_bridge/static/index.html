@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="fi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Ruuvi Bridge · Mittaukset</title>
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="stylesheet" href="/style.css" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="brand">
+          <img class="mark" src="/logo.png" width="56" height="56" alt="" />
+          <h1>Ruuvi Bridge</h1>
+        </div>
+        <button id="settings-open" class="secondary">Asetukset</button>
+      </header>
+      <div id="demo" class="notice" hidden>
+        Esikatselu · Näytetyt mittaukset ovat esimerkkidataa. Bluetooth ja MQTT
+        eivät ole käytössä.
+      </div>
+      <div id="feedback" role="status" aria-live="polite"></div>
+      <section class="connections" aria-label="Yhteydet">
+        <span id="bluetooth-status">Bluetooth käynnistyy…</span
+        ><span id="mqtt-status">MQTT käynnistyy…</span>
+      </section>
+      <section aria-labelledby="sensors-title">
+        <div class="section-title">
+          <h2 id="sensors-title">Anturit</h2>
+          <span id="sensor-count"></span>
+        </div>
+        <div id="sensors" class="sensors"></div>
+        <div id="empty" class="panel empty">
+          <h3>Odotetaan RuuviTagia</h3>
+          <p>
+            Pidä Bluetooth päällä ja tuo tagi tietokoneen lähelle. Pariliitosta
+            ei tarvita.
+          </p>
+          <p>Kun tagi löytyy, ota se seurantaan tästä näkymästä.</p>
+        </div>
+        <p id="unsupported" class="warning" hidden></p>
+      </section>
+      <section class="panel history" aria-labelledby="history-title">
+        <div class="section-title">
+          <h2 id="history-title">Mittaushistoria</h2>
+          <a id="export" class="text-button" download="ruuvi-historia.csv"
+            >Lataa CSV ↓</a
+          >
+        </div>
+        <div class="history-controls">
+          <label
+            >Anturi<select id="history-tag">
+              <option value="">Valitse anturi</option>
+            </select></label
+          >
+          <div class="ranges" role="group" aria-label="Historian aikaväli">
+            <button data-hours="1" aria-pressed="false">1 h</button
+            ><button data-hours="24" aria-pressed="true">24 h</button
+            ><button data-hours="168" aria-pressed="false">7 vrk</button
+            ><button data-hours="720" aria-pressed="false">30 vrk</button>
+          </div>
+        </div>
+        <div class="charts">
+          <section class="chart-panel" aria-labelledby="humidity-title">
+            <h3 id="humidity-title">Kosteus <span>%</span></h3>
+            <div class="chart-wrap">
+              <canvas
+                id="chart-humidity"
+                role="img"
+                aria-label="Kosteuden mittauskäyrä"
+              ></canvas>
+              <p id="empty-humidity" class="chart-empty">
+                Historia kertyy tähän mittausten saapuessa.
+              </p>
+            </div>
+            <div id="summary-humidity" class="history-summary"></div>
+          </section>
+          <section class="chart-panel" aria-labelledby="temperature-title">
+            <h3 id="temperature-title">Lämpötila <span>°C</span></h3>
+            <div class="chart-wrap">
+              <canvas
+                id="chart-temperature"
+                role="img"
+                aria-label="Lämpötilan mittauskäyrä"
+              ></canvas>
+              <p id="empty-temperature" class="chart-empty">
+                Historia kertyy tähän mittausten saapuessa.
+              </p>
+            </div>
+            <div id="summary-temperature" class="history-summary"></div>
+          </section>
+          <section class="chart-panel" aria-labelledby="pressure-title">
+            <h3 id="pressure-title">Ilmanpaine <span>hPa</span></h3>
+            <div class="chart-wrap">
+              <canvas
+                id="chart-pressure"
+                role="img"
+                aria-label="Ilmanpaineen mittauskäyrä"
+              ></canvas>
+              <p id="empty-pressure" class="chart-empty">
+                Historia kertyy tähän mittausten saapuessa.
+              </p>
+            </div>
+            <div id="summary-pressure" class="history-summary"></div>
+          </section>
+        </div>
+        <p class="muted">
+          Historia tallentuu 30 sekunnin välein ja säilyy 30 päivää. Katkot
+          näkyvät käyrän aukkoina.
+        </p>
+      </section>
+      <footer>RuuviTag → Windows → Home Assistant</footer>
+    </main>
+    <dialog id="settings-dialog">
+      <form id="settings-form">
+        <div class="section-title">
+          <h2>Asetukset</h2>
+          <button type="button" id="settings-close" class="secondary">
+            Sulje
+          </button>
+        </div>
+        <fieldset>
+          <legend>Home Assistant / MQTT</legend>
+          <label class="check"
+            ><input id="mqtt-enabled" type="checkbox" /> Lähetä valittujen
+            anturien mittaukset</label
+          >
+          <div class="two-columns">
+            <label
+              >Palvelimen osoite<input
+                id="mqtt-host"
+                required
+                value="127.0.0.1"
+                maxlength="253" /></label
+            ><label
+              >Portti<input
+                id="mqtt-port"
+                type="number"
+                min="1"
+                max="65535"
+                value="1883"
+                required
+            /></label>
+          </div>
+          <div class="two-columns">
+            <label
+              >Käyttäjätunnus<input
+                id="mqtt-username"
+                autocomplete="username" /></label
+            ><label
+              >Salasana<input
+                id="mqtt-password"
+                type="password"
+                autocomplete="new-password"
+                placeholder="Ei salasanaa"
+            /></label>
+          </div>
+          <label class="check"
+            ><input id="clear-password" type="checkbox" /> Poista tallennettu
+            salasana</label
+          ><label class="check"
+            ><input id="mqtt-tls" type="checkbox" /> Salattu yhteys (TLS)</label
+          >
+          <p class="muted">
+            Home Assistant löytää valitut anturit MQTT-integraation kautta.
+            Molempien on käytettävä samaa MQTT-palvelinta.
+          </p>
+        </fieldset>
+        <fieldset>
+          <legend>Windows</legend>
+          <div class="two-columns">
+            <label
+              >Kellon vieressä näkyvä anturi<select id="tray-tag">
+                <option value="">Ei valintaa</option>
+              </select></label
+            ><label
+              >Kuvakkeen lukema<select id="tray-metric">
+                <option value="humidity">Kosteus (%)</option>
+                <option value="temperature">Lämpötila (°C)</option>
+              </select></label
+            >
+          </div>
+          <p class="muted">
+            Kuvake näyttää kokonaisluvun. Napsautus avaa mittaukset ja
+            historian.
+          </p>
+          <label class="check"
+            ><input id="autostart" type="checkbox" /> Käynnistä Windowsiin
+            kirjautuessa</label
+          >
+        </fieldset>
+        <p id="settings-feedback" role="status"></p>
+        <button type="submit">Tallenna asetukset</button>
+      </form>
+    </dialog>
+    <dialog id="tag-dialog">
+      <form id="tag-form">
+        <h2 id="tag-dialog-title">Ota anturi seurantaan</h2>
+        <p id="tag-address" class="muted"></p>
+        <label
+          >Anturin nimi<input
+            id="tag-name"
+            required
+            maxlength="60"
+            autocomplete="off" /></label
+        ><label class="check"
+          ><input id="tag-enabled" type="checkbox" checked /> Tallenna historia
+          ja lähetä MQTT:llä</label
+        >
+        <p class="muted">
+          Valitse vain oma anturisi. Nimi näkyy myös Home Assistantissa.
+        </p>
+        <p id="tag-feedback" role="status"></p>
+        <div class="actions">
+          <button type="submit">Tallenna</button
+          ><button id="tag-cancel" type="button" class="secondary">
+            Peruuta
+          </button>
+        </div>
+      </form>
+    </dialog>
+  </body>
+</html>
