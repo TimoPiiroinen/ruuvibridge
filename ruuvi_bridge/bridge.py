@@ -6,6 +6,7 @@ import threading
 import time
 
 from .decoder import COMPANY_ID, decode
+from .i18n import translate
 from .mqtt import Publisher
 from .windows import set_autostart
 
@@ -53,7 +54,10 @@ class Bridge:
         now = time.time()
         with self.lock:
             readings = {k: dict(v) for k, v in self.readings.items()}
-            statuses = dict(self.statuses)
+            statuses = {
+                key: {**value, "message": translate(value["message"], cfg["language"])}
+                for key, value in self.statuses.items()
+            }
             unsupported = sorted(self.unsupported)
         sensors = []
         for tag in sorted(set(cfg["tags"]) | set(readings)):
@@ -172,7 +176,7 @@ class Bridge:
         # Synthetic locally administered address, never a real user's sensor.
         tag = "020000000001"
         if tag not in self.store.settings()["tags"]:
-            self.store.set_tag(tag, "Olohuone (demo)", True)
+            self.store.set_tag(tag, "Demo sensor", True)
         now = time.time()
         # Seed only the separate demo database, and only once.
         if not self.store.history(tag, 24):

@@ -1,5 +1,35 @@
 "use strict";
 const $ = (id) => document.getElementById(id);
+let language = "en",
+  translations = {};
+const locale = () => (language === "fi" ? "fi-FI" : "en-GB");
+function t(message, values = {}) {
+  const text = language === "fi" ? message : translations[message] || message;
+  return text.replace(/\{(\w+)\}/g, (match, key) => values[key] ?? match);
+}
+function applyLanguage(next) {
+  const changed = language !== next;
+  language = next === "fi" ? "fi" : "en";
+  document.documentElement.lang = language;
+  document.title = "Ruuvi Bridge · " + t("Mittaukset");
+  document.querySelectorAll("[data-i18n]").forEach((element) => {
+    element.textContent = t(element.dataset.i18n);
+  });
+  document.querySelectorAll("[data-i18n-aria]").forEach((element) => {
+    element.setAttribute("aria-label", t(element.dataset.i18nAria));
+  });
+  if (changed) {
+    // Old feedback belongs to the previous language, not the current action.
+    for (const id of ["feedback", "settings-feedback", "tag-feedback"])
+      $(id).textContent = "";
+    if (state)
+      $("mqtt-password").placeholder = t(
+        state.settings.has_password
+          ? "Tallennettu · tyhjä säilyttää"
+          : "Ei salasanaa",
+      );
+  }
+}
 let state,
   token,
   hours = 24,
@@ -10,12 +40,12 @@ let selected = new URLSearchParams(location.search).get("tag") || "";
 const number = (value, digits = 1) =>
   value == null
     ? "–"
-    : Number(value).toLocaleString("fi-FI", {
+    : Number(value).toLocaleString(locale(), {
         maximumFractionDigits: digits,
         minimumFractionDigits: digits,
       });
 const stamp = (time) =>
-  new Date(time * 1000).toLocaleString("fi-FI", {
+  new Date(time * 1000).toLocaleString(locale(), {
     day: "numeric",
     month: "numeric",
     hour: "2-digit",
@@ -41,7 +71,7 @@ async function post(path, data) {
     body: JSON.stringify(data),
   });
   const body = await response.json();
-  if (!response.ok) throw new Error(body.error || "Toiminto epäonnistui");
+  if (!response.ok) throw new Error(body.error || t("Toiminto epäonnistui"));
   return body;
 }
 function feedback(message) {
@@ -58,8 +88,8 @@ function options(select, tags, value, emptyLabel) {
 function openTag(sensor) {
   editTag = sensor.id;
   $("tag-dialog-title").textContent = sensor.enabled
-    ? "Anturin asetukset"
-    : "Ota anturi seurantaan";
+    ? t("Anturin asetukset")
+    : t("Ota anturi seurantaan");
   $("tag-address").textContent = sensor.id.match(/../g).join(":").toUpperCase();
   $("tag-name").value = sensor.name;
   $("tag-enabled").checked = sensor.enabled || !state.settings.tags[sensor.id];
@@ -95,10 +125,10 @@ function renderSensors() {
       node(
         "span",
         !sensor.enabled
-          ? "Löytynyt"
+          ? t("Löytynyt")
           : sensor.fresh
-            ? "Seurannassa"
-            : "Ei yhteyttä",
+            ? t("Seurannassa")
+            : t("Ei yhteyttä"),
         "pill" + (sensor.enabled && !sensor.fresh ? " stale" : ""),
       ),
     );
@@ -111,40 +141,43 @@ function renderSensors() {
       const group = node("div");
       const value = node("div", number(sensor[key]), "value");
       value.append(node("span", unit, "unit"));
-      group.append(node("div", label, "reading-label"), value);
+      group.append(node("div", t(label), "reading-label"), value);
       values.append(group);
     }
     const details = node("div", null, "sensor-details");
     details.append(
-      node("span", "Paristo " + number(sensor.battery) + " V"),
-      node("span", "Signaali " + number(sensor.rssi, 0) + " dBm"),
+      node("span", t("Paristo") + " " + number(sensor.battery) + " V"),
+      node("span", t("Signaali") + " " + number(sensor.rssi, 0) + " dBm"),
     );
     const actions = node("div", null, "sensor-actions");
     if (sensor.enabled) {
       actions.append(
-        button("Historia", () => showHistory(sensor.id), false),
-        button("Muokkaa", () => openTag(sensor)),
+        button(t("Historia"), () => showHistory(sensor.id), false),
+        button(t("Muokkaa"), () => openTag(sensor)),
       );
     } else {
-      actions.append(button("Ota seurantaan", () => openTag(sensor), false));
+      actions.append(button(t("Ota seurantaan"), () => openTag(sensor), false));
       if (state.settings.tags[sensor.id])
-        actions.append(button("Historia", () => showHistory(sensor.id)));
+        actions.append(button(t("Historia"), () => showHistory(sensor.id)));
     }
     const seen =
       sensor.age == null
-        ? "Odotetaan ensimmäistä mittausta"
+        ? t("Odotetaan ensimmäistä mittausta")
         : sensor.fresh
-          ? "Päivitetty " + Math.round(sensor.age) + " s sitten"
-          : "Viimeisin mittaus " +
-            stamp(sensor.last_seen) +
-            " · arvot ovat vanhentuneet";
+          ? t("Päivitetty {seconds} s sitten", {
+              seconds: Math.round(sensor.age),
+            })
+          : t("Viimeisin mittaus {time} · arvot ovat vanhentuneet", {
+              time: stamp(sensor.last_seen),
+            });
     card.append(top, values, details, actions, node("p", seen, "seen"));
     return card;
   });
   $("sensors").replaceChildren(...cards);
   $("empty").hidden = cards.length > 0;
-  $("sensor-count").textContent =
-    state.sensors.filter((s) => s.enabled).length + " seurannassa";
+  $("sensor-count").textContent = t("{count} seurannassa", {
+    count: state.sensors.filter((s) => s.enabled).length,
+  });
 }
 async function refresh() {
   try {
@@ -152,10 +185,17 @@ async function refresh() {
     if (!response.ok) throw new Error();
     state = await response.json();
     token = state.token;
+    if (
+      document.documentElement.lang !== state.settings.language ||
+      !refresh.localized
+    ) {
+      applyLanguage(state.settings.language);
+      refresh.localized = true;
+    }
     $("demo").hidden = !state.demo;
     for (const kind of ["bluetooth", "mqtt"]) {
       const status = state.status[kind];
-      $(kind + "-status").textContent = status?.message || "Käynnistyy…";
+      $(kind + "-status").textContent = status?.message || t("Käynnistyy…");
       $(kind + "-status").className = ["scanning", "connected"].includes(
         status?.state,
       )
@@ -165,22 +205,24 @@ async function refresh() {
     if (state.status.storage?.state === "error")
       feedback(state.status.storage.message);
     $("unsupported").hidden = !state.unsupported_formats.length;
-    $("unsupported").textContent =
-      "Havaittiin myös Ruuvi-dataa muodossa " +
-      state.unsupported_formats.join(", ") +
-      ". Tämä versio tukee RuuviTagin RAWv2-muotoa (5).";
+    $("unsupported").textContent = t(
+      "Havaittiin myös Ruuvi-dataa muodossa {formats}. Tämä versio tukee RuuviTagin RAWv2-muotoa (5).",
+      { formats: state.unsupported_formats.join(", ") },
+    );
     renderSensors();
     const tracked = state.sensors.filter((s) => state.settings.tags[s.id]);
     if (!selected || !tracked.some((s) => s.id === selected))
       selected = tracked[0]?.id || "";
-    options($("history-tag"), tracked, selected, "Valitse anturi");
+    options($("history-tag"), tracked, selected, t("Valitse anturi"));
     if ($("feedback").dataset.connectionError) {
       feedback("");
       delete $("feedback").dataset.connectionError;
     }
   } catch (error) {
     feedback(
-      "Yhteys Ruuvi Bridgeen katkesi. Tarkista, että taustaohjelma on käynnissä.",
+      t(
+        "Yhteys Ruuvi Bridgeen katkesi. Tarkista, että taustaohjelma on käynnissä.",
+      ),
     );
     $("feedback").dataset.connectionError = "true";
   }
@@ -204,7 +246,7 @@ async function loadHistory() {
     points = data.samples;
     drawCharts();
   } catch (error) {
-    feedback("Historian haku epäonnistui. Yritä uudelleen.");
+    feedback(t("Historian haku epäonnistui. Yritä uudelleen."));
   }
 }
 const metrics = {
@@ -228,10 +270,13 @@ function drawChart(key) {
   const { unit, label, color } = metrics[key];
   $("empty-" + key).hidden = samples.length > 0;
   $("empty-" + key).textContent = selected
-    ? "Historia kertyy tähän mittausten saapuessa."
-    : "Valitse seurattava anturi nähdäksesi historian.";
+    ? t("Historia kertyy tähän mittausten saapuessa.")
+    : t("Valitse seurattava anturi nähdäksesi historian.");
   $("summary-" + key).replaceChildren();
-  if (!samples.length) return;
+  if (!samples.length) {
+    canvas.setAttribute("aria-label", t(label));
+    return;
+  }
   const values = samples.map((p) => p[key]);
   const minimum = Math.min(...values),
     maximum = Math.max(...values),
@@ -241,7 +286,7 @@ function drawChart(key) {
     ["Keskiarvo", average],
     ["Ylin", maximum],
   ]) {
-    const item = node("span", label + " ");
+    const item = node("span", t(label) + " ");
     item.append(node("strong", number(value) + " " + unit));
     $("summary-" + key).append(item);
   }
@@ -276,7 +321,7 @@ function drawChart(key) {
   for (let i = 0; i <= 3; i++) {
     const time = start + ((end - start) * i) / 3;
     const label = new Date(time * 1000).toLocaleString(
-      "fi-FI",
+      locale(),
       hours <= 24
         ? { hour: "2-digit", minute: "2-digit" }
         : { day: "numeric", month: "numeric" },
@@ -310,7 +355,13 @@ function drawChart(key) {
   }
   canvas.setAttribute(
     "aria-label",
-    `${label}, ${hours} tuntia. Alin ${number(minimum)}, ylin ${number(maximum)} ${unit}.`,
+    t("{label}, {hours} tuntia. Alin {minimum}, ylin {maximum} {unit}.", {
+      label: t(label),
+      hours,
+      minimum: number(minimum),
+      maximum: number(maximum),
+      unit,
+    }),
   );
 }
 $("history-tag").addEventListener("change", () => {
@@ -331,18 +382,24 @@ $("settings-open").addEventListener("click", () => {
   const cfg = state.settings;
   for (const key of ["mqtt_enabled", "mqtt_tls", "autostart"])
     $(key.replaceAll("_", "-")).checked = cfg[key];
-  for (const key of ["mqtt_host", "mqtt_port", "mqtt_username", "tray_metric"])
+  for (const key of [
+    "mqtt_host",
+    "mqtt_port",
+    "mqtt_username",
+    "tray_metric",
+    "language",
+  ])
     $(key.replaceAll("_", "-")).value = cfg[key];
   options(
     $("tray-tag"),
     state.sensors.filter((s) => s.enabled),
     cfg.tray_tag,
-    "Ei valintaa",
+    t("Ei valintaa"),
   );
   $("mqtt-password").value = "";
   $("mqtt-password").placeholder = cfg.has_password
-    ? "Tallennettu · tyhjä säilyttää"
-    : "Ei salasanaa";
+    ? t("Tallennettu · tyhjä säilyttää")
+    : t("Ei salasanaa");
   $("clear-password").checked = false;
   $("settings-feedback").textContent = "";
   $("settings-dialog").showModal();
@@ -358,7 +415,13 @@ $("settings-form").addEventListener("submit", async (event) => {
     const values = {};
     for (const key of ["mqtt_enabled", "mqtt_tls", "autostart"])
       values[key] = $(key.replaceAll("_", "-")).checked;
-    for (const key of ["mqtt_host", "mqtt_username", "tray_metric", "tray_tag"])
+    for (const key of [
+      "mqtt_host",
+      "mqtt_username",
+      "tray_metric",
+      "tray_tag",
+      "language",
+    ])
       values[key] = $(key.replaceAll("_", "-")).value;
     values.mqtt_port = Number($("mqtt-port").value);
     values.mqtt_password = $("clear-password").checked
@@ -366,8 +429,9 @@ $("settings-form").addEventListener("submit", async (event) => {
       : $("mqtt-password").value || null;
     await post("/api/settings", values);
     $("settings-dialog").close();
-    feedback("Asetukset tallennettu.");
     await refresh();
+    drawCharts();
+    feedback(t("Asetukset tallennettu."));
   } catch (error) {
     $("settings-feedback").textContent = error.message;
   } finally {
@@ -386,7 +450,7 @@ $("tag-form").addEventListener("submit", async (event) => {
       enabled: $("tag-enabled").checked,
     });
     $("tag-dialog").close();
-    feedback("Anturin asetukset tallennettu.");
+    feedback(t("Anturin asetukset tallennettu."));
     await refresh();
     await loadHistory();
   } catch (error) {
@@ -403,4 +467,15 @@ async function poll() {
   await loadHistory();
   setTimeout(poll, 5000);
 }
-poll();
+async function start() {
+  try {
+    const response = await fetch("/i18n.json");
+    if (!response.ok) throw new Error();
+    translations = await response.json();
+    applyLanguage(language);
+    await poll();
+  } catch {
+    feedback("Could not load translations. Please reload the page.");
+  }
+}
+start();

@@ -9,12 +9,33 @@ forward selected sensors to Home Assistant over MQTT.
 
 - Windows notification area icon showing **humidity or temperature** as a whole number.
 - Right-click the icon to switch the displayed measurement; the choice survives restarts.
-- Small Finnish-language browser UI with three simultaneous charts: humidity,
+- Small browser UI in English (default) or Finnish with three simultaneous charts: humidity,
   temperature, and pressure. Values use one decimal place.
 - Local SQLite history for 30 days, shared chart time ranges, and CSV export.
 - Home Assistant MQTT discovery for temperature, humidity, pressure, battery
   voltage, and signal strength.
 - Optional startup when you sign in to Windows. No popup notifications.
+
+## Screenshots
+
+English UI shown with synthetic demo data only. The sensor name, address, and
+measurements are fictional; no personal data or credentials are shown.
+
+![Desktop UI with sensor readings and three history charts](docs/screenshots/desktop.png)
+
+<details>
+<summary>Settings: language, MQTT, and Windows tray</summary>
+
+<img src="docs/screenshots/settings.png" alt="English settings dialog with language selection and empty credentials" width="560">
+
+</details>
+
+<details>
+<summary>Mobile layout</summary>
+
+<img src="docs/screenshots/mobile.png" alt="English mobile layout with all three history charts" width="390">
+
+</details>
 
 ## Install on Windows
 
@@ -30,9 +51,9 @@ Requires Windows with Bluetooth LE and Python 3.11 or newer. Tested on Windows
 2. Open `Install.cmd`. It installs dependencies in a dedicated virtual
    environment, copies the app to `%LOCALAPPDATA%\RuuviBridge\app`, creates a
    Start menu shortcut, and launches the app.
-3. In the browser, select **Ota seurantaan** for your discovered RuuviTag and
+3. In the browser, select **Track sensor** for your discovered RuuviTag and
    give it a name. The UI is at <http://127.0.0.1:8765>.
-4. For Home Assistant, open **Asetukset** and configure the same MQTT broker
+4. For Home Assistant, open **Settings** and configure the same MQTT broker
    used by Home Assistant's MQTT integration. The default is `127.0.0.1:1883`.
    Selected sensors are discovered automatically.
 
@@ -45,15 +66,21 @@ containers must be running to receive measurements.
 Start **Ruuvi Bridge** from the Start menu or use `Start.cmd`. Closing the
 browser leaves measurement collection running. Click the notification area
 icon to reopen measurements and history; right-click it to switch between
-**Näytä kosteus (%)** and **Näytä lämpötila (°C)** or to quit.
+**Show humidity (%)** and **Show temperature (°C)**, or choose **Quit Ruuvi Bridge**.
 
 The icon shows a whole number; its tooltip shows both readings with one decimal.
 A grey dash means no fresh measurement is available. Windows may initially put
 the icon in its overflow menu; drag it beside the clock to keep it visible.
-Select the sensor and measurement in **Asetukset** as well.
+You can also select **Tray sensor** and **Tray reading** in **Settings**.
 
-Automatic startup is off on a fresh installation. Enable the startup option
-in **Asetukset** to start collecting after login without opening a browser.
+To change the language, open **Settings → Language**, select **English** or
+**Suomi**, and click **Save settings**. The browser UI and Windows tray menu
+update together, and the choice survives restarts. English is the default,
+including when upgrading an installation without a saved language setting.
+Sensor names are kept exactly as entered.
+
+Automatic startup is off on a fresh installation. Enable **Start when signing
+in to Windows** in **Settings** to start collecting after login without opening a browser.
 
 All three charts share the sensor and time range controls: 1 hour, 24 hours,
 7 days, or 30 days. Long ranges use time-bucket averages; CSV exports the same
@@ -84,8 +111,9 @@ existing history until retention expires. Home Assistant has its own retention s
 The UI listens only on IPv4 loopback. Changes require a per-process token and
 foreign browser origins are rejected. MQTT passwords are stored in plaintext
 in the local user's settings file, but never returned by the HTTP API. MQTT
-TLS is optional. Runtime settings, databases, logs, and screenshots are ignored
-by Git; do not share them without reviewing their contents.
+TLS is optional. Runtime settings, databases, logs, and test screenshots in
+`artifacts/` are ignored by Git; do not share them without reviewing their contents.
+Only reviewed synthetic screenshots in `docs/screenshots/` are published.
 
 ## Limits
 
@@ -96,7 +124,7 @@ by Git; do not share them without reviewing their contents.
   it does not exclusively reserve the tag or Bluetooth adapter. Concurrent
   scanner behavior still depends on Windows and the adapter driver.
 - No download of historical readings from the tag and no MQTT offline replay.
-- The browser UI is local to the PC and currently available only in Finnish.
+- The browser UI is local to the PC and supports English and Finnish.
 
 ## Development
 

@@ -11,6 +11,7 @@ from pathlib import Path
 
 TAG_ID = re.compile(r"^[0-9a-f]{12}$")
 DEFAULTS = {
+    "language": "en",
     "mqtt_enabled": True,
     "mqtt_host": "127.0.0.1",
     "mqtt_port": 1883,
@@ -85,6 +86,8 @@ class Store:
             raise ValueError("Portin on oltava 1–65535")
         if cfg["tray_metric"] not in ("humidity", "temperature"):
             raise ValueError("Virheellinen kuvakkeen mittaus")
+        if cfg["language"] not in ("en", "fi"):
+            raise ValueError("Valitse tuettu kieli")
         if not isinstance(cfg["tray_tag"], str):
             raise ValueError("Valitse tunnettu anturi")
         if cfg["tray_tag"] and cfg["tray_tag"] not in cfg["tags"]:

@@ -11,6 +11,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
+from .i18n import translate
 from .storage import TAG_ID
 
 LOG = logging.getLogger(__name__)
@@ -38,6 +39,11 @@ def create_server(bridge, port, shutdown):
             LOG.debug(fmt, *args)
 
         def respond(self, code, body, content_type="application/json; charset=utf-8"):
+            if isinstance(body, dict) and "error" in body:
+                body = {
+                    **body,
+                    "error": translate(body["error"], bridge.store.settings()["language"]),
+                }
             if isinstance(body, (dict, list)):
                 body = json.dumps(body, ensure_ascii=False, allow_nan=False).encode("utf-8")
             elif isinstance(body, str):
@@ -91,6 +97,7 @@ def create_server(bridge, port, shutdown):
             assets = {
                 "/": ("index.html", "text/html; charset=utf-8"),
                 "/app.js": ("app.js", "text/javascript; charset=utf-8"),
+                "/i18n.json": ("i18n.json", "application/json; charset=utf-8"),
                 "/style.css": ("style.css", "text/css; charset=utf-8"),
                 "/logo.png": ("assets/ruuvi-bridge-logo-256.png", "image/png"),
                 "/favicon.ico": ("assets/ruuvi-bridge.ico", "image/x-icon"),

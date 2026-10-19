@@ -475,7 +475,7 @@ select {
   font-size: 15px;
   margin: 0;
 }
-.chart-panel h3 span {
+.chart-panel h3 span:not(.metric-label) {
   font-size: 12px;
   font-weight: 400;
   color: var(--muted);

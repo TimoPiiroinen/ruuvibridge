@@ -24,7 +24,8 @@ login does not need a running WSL distribution for this app to start.
 | `storage.py` | Validated settings, atomic JSON replacement, SQLite history |
 | `windows.py` | Numeric tray image, menu, HKCU startup |
 | `server.py` | Loopback-only HTTP API and fixed static assets |
-| `static/` | Finnish HTML/CSS/JavaScript UI, canvas plot, dialogs and polling |
+| `static/` | English/Finnish HTML/CSS/JavaScript UI, canvas plots, dialogs and polling |
+| `i18n.py`, `static/i18n.json` | Shared translation catalog for browser, API messages and tray |
 | `scripts/` | Windows installation and independent BLE diagnostic |
 | `tests/` | Unit/API tests, isolated real MQTT test, Playwright UI checks |
 
@@ -70,7 +71,13 @@ same cleanup is repeated on reconnect for disabled tags.
 
 No frontend framework, cloud hosting, external font, DNS, analytics or account.
 Loopback HTTP defaults to `http://127.0.0.1:8765`. Responsive desktop and narrow
-layouts support modern Edge/Chrome/Firefox. Only Finnish is supported. Humidity,
+layouts support modern Edge/Chrome/Firefox. English is the default and Finnish
+can be selected in Settings. The validated `language` setting persists across
+restarts; existing installations without this setting also default to English.
+The browser translates labels, status and error messages, chart summaries and
+accessible names, using the selected locale for numbers and dates. The Windows
+tray menu and tooltip follow the same setting. User-entered sensor names and
+existing Home Assistant entity names are preserved. Humidity,
 temperature and pressure each have a permanently visible chart, sharing sensor
 and time range controls. Visible values and summaries use one decimal; stored
 and MQTT values preserve sensor precision. A native
@@ -112,6 +119,11 @@ browser favicon, Start menu shortcut and initial tray icon use the mascot.
 The live tray measurement remains an integer drawn with the installed system
 font. No external asset licensing dependency was introduced. Python and npm
 dependencies retain their upstream licenses.
+
+README screenshots in `docs/screenshots/` are captured from a fresh isolated
+English demo with a synthetic sensor and empty MQTT credentials. They contain
+only browser content, not the user's desktop. Review both visible content and
+PNG metadata before publishing replacements; normal test captures stay ignored.
 
 ## Build, deployment and maintenance
 

@@ -12,6 +12,8 @@ and [the system specification](docs/system-specification.md) for architecture.
 - `tests/`: decoder/storage/API/tray, MQTT integration, and Playwright checks.
 - `ruuvi_bridge/static/assets/`: generated mascot, web PNG, and Windows ICO.
 - `docs/logo-prompt.txt`: original mascot generation prompt.
+- `docs/screenshots/`: reviewed English demo captures for the README.
+- `ruuvi_bridge/static/i18n.json`: shared English translations of Finnish message keys.
 - Installed source: `%LOCALAPPDATA%\RuuviBridge\app`.
 - Private state: `%LOCALAPPDATA%\RuuviBridge\data`.
 - Local UI: <http://127.0.0.1:8765>.
@@ -55,7 +57,26 @@ Release validation (2026-10-19): seven unit/API/tray tests passed on Linux and
 Windows; native Windows menu construction and radio actions passed; isolated
 MQTT integration and desktop/mobile Playwright checks passed. Ruff and Prettier
 checks passed. Gitleaks found no secrets in the staged release export or the
-existing repository history. Personal runtime data and screenshots are excluded.
+existing repository history. Personal runtime data and live screenshots are excluded.
+
+Language and README update: English is now the default; Settings → Language
+persists English or Finnish for the UI and tray. Extend the shared catalog when
+adding user-facing messages; keep user-entered sensor names unchanged. Run the
+UI checks in both languages after changing copy or layout. Tests cover saved
+language, upgrade defaults, translated validation/status/tray text, and decimal
+formatting as well as desktop/mobile interactions.
+Validation passed: eight Python tests on Linux and Windows, native Windows tray
+labels/actions in both languages, English/Finnish Playwright checks, Ruff and
+Prettier. All three public English PNGs were visually reviewed and contain no
+PNG metadata; sensor data is synthetic and credential fields are empty.
+
+For public screenshots, start `run.py --demo --no-open --no-tray --port 8767
+--data-dir <fresh-temporary-directory>`, then run the UI checks with
+`RUUVI_URL=http://127.0.0.1:8767 npm run test:ui`. Use a fresh browser page in
+English to capture the full desktop and mobile views plus the settings dialog.
+Verify demo mode, the synthetic sensor address `020000000001`, and empty
+credentials before capture. Inspect the PNGs and metadata, then publish only
+the three approved files in `docs/screenshots/`. Stop the temporary demo after use.
 
 The icon uses integers; the tooltip and UI use one decimal. Right-click choices
 and browser settings share the same persisted metric. Startup on login is

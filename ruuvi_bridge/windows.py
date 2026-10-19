@@ -7,6 +7,8 @@ import threading
 import webbrowser
 from pathlib import Path
 
+from .i18n import translate
+
 
 def set_autostart(enabled, directory):
     """Manage only this app's per-user Run entry; no administrator rights needed."""
@@ -70,25 +72,30 @@ class Tray:
             "Ruuvi Bridge",
             menu=pystray.Menu(
                 pystray.MenuItem(
-                    "Avaa mittaukset ja historia", lambda: webbrowser.open(bridge.url), default=True
+                    self.menu_text("Avaa mittaukset ja historia"),
+                    lambda: webbrowser.open(bridge.url),
+                    default=True,
                 ),
                 pystray.Menu.SEPARATOR,
                 pystray.MenuItem(
-                    "Näytä kosteus (%)",
+                    self.menu_text("Näytä kosteus (%)"),
                     self.select_metric("humidity"),
                     checked=self.metric_selected("humidity"),
                     radio=True,
                 ),
                 pystray.MenuItem(
-                    "Näytä lämpötila (°C)",
+                    self.menu_text("Näytä lämpötila (°C)"),
                     self.select_metric("temperature"),
                     checked=self.metric_selected("temperature"),
                     radio=True,
                 ),
                 pystray.Menu.SEPARATOR,
-                pystray.MenuItem("Lopeta Ruuvi Bridge", lambda: stop()),
+                pystray.MenuItem(self.menu_text("Lopeta Ruuvi Bridge"), lambda: stop()),
             ),
         )
+
+    def menu_text(self, message):
+        return lambda item: translate(message, self.bridge.store.settings()["language"])
 
     def select_metric(self, metric):
         """Use the same validated settings path as the browser, including persistence."""
@@ -111,9 +118,10 @@ class Tray:
             while not self.done.wait(2):
                 state = self.bridge.snapshot()
                 cfg = state["settings"]
-                if cfg["tray_metric"] != previous_metric:
+                menu_state = (cfg["tray_metric"], cfg["language"])
+                if menu_state != previous_metric:
                     icon.update_menu()
-                    previous_metric = cfg["tray_metric"]
+                    previous_metric = menu_state
                 sensor = next(
                     (s for s in state["sensors"] if s["id"] == cfg["tray_tag"] and s["enabled"]),
                     None,
@@ -121,18 +129,29 @@ class Tray:
                 fresh = sensor is not None and sensor["fresh"]
                 value = sensor.get(cfg["tray_metric"]) if fresh else None
                 text = str(round(value)) if value is not None else "–"
-                title = "Ruuvi Bridge – valitse anturi käyttöliittymässä"
+                title = translate(
+                    "Ruuvi Bridge – valitse anturi käyttöliittymässä", cfg["language"]
+                )
                 if sensor:
                     if fresh:
                         temp = sensor.get("temperature")
                         humidity = sensor.get("humidity")
-                        temp_text = f"{temp:.1f}".replace(".", ",") if temp is not None else "–"
+                        separator = "," if cfg["language"] == "fi" else "."
+                        temp_text = (
+                            f"{temp:.1f}".replace(".", separator) if temp is not None else "–"
+                        )
                         humidity_text = (
-                            f"{humidity:.1f}".replace(".", ",") if humidity is not None else "–"
+                            f"{humidity:.1f}".replace(".", separator)
+                            if humidity is not None
+                            else "–"
                         )
                         title = f"{sensor['name']}: {temp_text} °C / {humidity_text} %"
                     else:
-                        title = sensor["name"] + " – ei tuoretta mittausta"
+                        title = (
+                            sensor["name"]
+                            + " – "
+                            + translate("ei tuoretta mittausta", cfg["language"])
+                        )
                 current = (text, fresh, title)
                 if current != previous:
                     icon.icon = tray_image(text, fresh)

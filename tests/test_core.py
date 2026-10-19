@@ -10,6 +10,7 @@ from urllib.request import Request, urlopen
 
 from ruuvi_bridge.bridge import Bridge
 from ruuvi_bridge.decoder import decode
+from ruuvi_bridge.i18n import translate
 from ruuvi_bridge.server import create_server
 from ruuvi_bridge.storage import Store
 from ruuvi_bridge.windows import Tray
@@ -87,10 +88,38 @@ class StoreTests(unittest.TestCase):
             {"tags": {}},
             {"mqtt_host": "bad/host"},
             {"tray_tag": []},
+            {"language": "sv"},
+            {"language": None},
         ):
             with self.assertRaises(ValueError):
                 self.store.update_settings(values)
             self.assertEqual(before, self.store.settings())
+
+    def test_language_defaults_persistence_status_and_tray_labels(self):
+        self.assertEqual(self.store.settings()["language"], "en")
+        bridge = Bridge(self.store, self.directory, "http://127.0.0.1/", demo=True)
+        bridge.status("bluetooth", "scanning", "Bluetooth-kuuntelu käynnissä")
+        bridge.status("mqtt", "connected", "Yhdistetty: localhost")
+        tray = Tray.__new__(Tray)
+        tray.bridge = bridge
+        self.assertEqual(tray.menu_text("Näytä kosteus (%)")(None), "Show humidity (%)")
+        self.assertEqual(bridge.snapshot()["status"]["bluetooth"]["message"], "Bluetooth scanning")
+        self.assertEqual(bridge.snapshot()["status"]["mqtt"]["message"], "Connected: localhost")
+        bridge.update_settings({"language": "fi"})
+        self.assertEqual(tray.menu_text("Näytä kosteus (%)")(None), "Näytä kosteus (%)")
+        self.assertEqual(
+            bridge.snapshot()["status"]["bluetooth"]["message"], "Bluetooth-kuuntelu käynnissä"
+        )
+        self.store.close()
+        self.store = Store(self.directory)
+        self.assertEqual(self.store.settings()["language"], "fi")
+        # Upgrading settings created before the language option defaults to English.
+        self.store.close()
+        saved = json.loads((self.directory / "settings.json").read_text())
+        del saved["language"]
+        (self.directory / "settings.json").write_text(json.dumps(saved))
+        self.store = Store(self.directory)
+        self.assertEqual(self.store.settings()["language"], "en")
 
     def test_tray_metric_actions_persist_and_reflect_browser_changes(self):
         # Exercise menu callbacks without requiring a Windows desktop session.
@@ -147,6 +176,21 @@ class StoreTests(unittest.TestCase):
                     )
                 self.assertEqual(caught.exception.code, 403)
             valid = {"X-Ruuvi-Token": token, "Content-Type": "application/json"}
+            for language, expected in (
+                ("en", "Select a supported language"),
+                ("fi", "Valitse tuettu kieli"),
+            ):
+                self.store.update_settings({"language": language})
+                with self.assertRaises(HTTPError) as caught:
+                    urlopen(
+                        Request(
+                            url + "/api/settings", data=b'{"language":"invalid"}', headers=valid
+                        )
+                    )
+                with caught.exception as error_response:
+                    self.assertEqual(error_response.code, 400)
+                    self.assertEqual(json.load(error_response)["error"], expected)
+            self.assertEqual(translate("Virheellinen pyyntö"), "Invalid request")
             urlopen(
                 Request(url + "/api/settings", data=b'{"tray_metric":"temperature"}', headers=valid)
             )

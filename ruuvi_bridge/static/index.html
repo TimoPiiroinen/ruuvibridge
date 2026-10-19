@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="fi">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Ruuvi Bridge · Mittaukset</title>
+    <title>Ruuvi Bridge · Measurements</title>
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="stylesheet" href="/style.css" />
     <script src="/app.js" defer></script>
@@ -15,100 +15,166 @@
           <img class="mark" src="/logo.png" width="56" height="56" alt="" />
           <h1>Ruuvi Bridge</h1>
         </div>
-        <button id="settings-open" class="secondary">Asetukset</button>
+        <button id="settings-open" class="secondary" data-i18n="Asetukset">
+          Settings
+        </button>
       </header>
-      <div id="demo" class="notice" hidden>
-        Esikatselu · Näytetyt mittaukset ovat esimerkkidataa. Bluetooth ja MQTT
-        eivät ole käytössä.
+      <div
+        id="demo"
+        class="notice"
+        hidden
+        data-i18n="Esikatselu · Näytetyt mittaukset ovat esimerkkidataa. Bluetooth ja MQTT eivät ole käytössä."
+      >
+        Preview · All measurements are sample data. Bluetooth and MQTT are
+        disabled.
       </div>
       <div id="feedback" role="status" aria-live="polite"></div>
-      <section class="connections" aria-label="Yhteydet">
-        <span id="bluetooth-status">Bluetooth käynnistyy…</span
-        ><span id="mqtt-status">MQTT käynnistyy…</span>
+      <section
+        class="connections"
+        aria-label="Connections"
+        data-i18n-aria="Yhteydet"
+      >
+        <span id="bluetooth-status" data-i18n="Bluetooth käynnistyy…"
+          >Bluetooth starting…</span
+        >
+        <span id="mqtt-status" data-i18n="MQTT käynnistyy…"
+          >MQTT starting…</span
+        >
       </section>
       <section aria-labelledby="sensors-title">
         <div class="section-title">
-          <h2 id="sensors-title">Anturit</h2>
+          <h2 id="sensors-title" data-i18n="Anturit">Sensors</h2>
           <span id="sensor-count"></span>
         </div>
         <div id="sensors" class="sensors"></div>
         <div id="empty" class="panel empty">
-          <h3>Odotetaan RuuviTagia</h3>
-          <p>
-            Pidä Bluetooth päällä ja tuo tagi tietokoneen lähelle. Pariliitosta
-            ei tarvita.
+          <h3 data-i18n="Odotetaan RuuviTagia">Waiting for a RuuviTag</h3>
+          <p
+            data-i18n="Pidä Bluetooth päällä ja tuo tagi tietokoneen lähelle. Pariliitosta ei tarvita."
+          >
+            Turn on Bluetooth and bring your tag near the PC. No pairing is
+            needed.
           </p>
-          <p>Kun tagi löytyy, ota se seurantaan tästä näkymästä.</p>
+          <p data-i18n="Kun tagi löytyy, ota se seurantaan tästä näkymästä.">
+            Once your tag appears, select it here to start tracking.
+          </p>
         </div>
         <p id="unsupported" class="warning" hidden></p>
       </section>
       <section class="panel history" aria-labelledby="history-title">
         <div class="section-title">
-          <h2 id="history-title">Mittaushistoria</h2>
-          <a id="export" class="text-button" download="ruuvi-historia.csv"
-            >Lataa CSV ↓</a
+          <h2 id="history-title" data-i18n="Mittaushistoria">
+            Measurement history
+          </h2>
+          <a
+            id="export"
+            class="text-button"
+            download="ruuvi-history.csv"
+            data-i18n="Lataa CSV ↓"
+            >Download CSV ↓</a
           >
         </div>
         <div class="history-controls">
           <label
-            >Anturi<select id="history-tag">
-              <option value="">Valitse anturi</option>
+            ><span data-i18n="Anturi">Sensor</span
+            ><select id="history-tag">
+              <option value="" data-i18n="Valitse anturi">
+                Select a sensor
+              </option>
             </select></label
           >
-          <div class="ranges" role="group" aria-label="Historian aikaväli">
-            <button data-hours="1" aria-pressed="false">1 h</button
-            ><button data-hours="24" aria-pressed="true">24 h</button
-            ><button data-hours="168" aria-pressed="false">7 vrk</button
-            ><button data-hours="720" aria-pressed="false">30 vrk</button>
+          <div
+            class="ranges"
+            role="group"
+            aria-label="History time range"
+            data-i18n-aria="Historian aikaväli"
+          >
+            <button data-hours="1" aria-pressed="false">1 h</button>
+            <button data-hours="24" aria-pressed="true">24 h</button>
+            <button data-hours="168" aria-pressed="false" data-i18n="7 vrk">
+              7 days
+            </button>
+            <button data-hours="720" aria-pressed="false" data-i18n="30 vrk">
+              30 days
+            </button>
           </div>
         </div>
         <div class="charts">
           <section class="chart-panel" aria-labelledby="humidity-title">
-            <h3 id="humidity-title">Kosteus <span>%</span></h3>
+            <h3 id="humidity-title">
+              <span class="metric-label" data-i18n="Kosteus">Humidity</span>
+              <span>%</span>
+            </h3>
             <div class="chart-wrap">
               <canvas
                 id="chart-humidity"
                 role="img"
-                aria-label="Kosteuden mittauskäyrä"
+                aria-label="Humidity chart"
+                data-i18n-aria="Kosteuden mittauskäyrä"
               ></canvas>
-              <p id="empty-humidity" class="chart-empty">
-                Historia kertyy tähän mittausten saapuessa.
+              <p
+                id="empty-humidity"
+                class="chart-empty"
+                data-i18n="Historia kertyy tähän mittausten saapuessa."
+              >
+                History will appear here as measurements arrive.
               </p>
             </div>
             <div id="summary-humidity" class="history-summary"></div>
           </section>
           <section class="chart-panel" aria-labelledby="temperature-title">
-            <h3 id="temperature-title">Lämpötila <span>°C</span></h3>
+            <h3 id="temperature-title">
+              <span class="metric-label" data-i18n="Lämpötila"
+                >Temperature</span
+              >
+              <span>°C</span>
+            </h3>
             <div class="chart-wrap">
               <canvas
                 id="chart-temperature"
                 role="img"
-                aria-label="Lämpötilan mittauskäyrä"
+                aria-label="Temperature chart"
+                data-i18n-aria="Lämpötilan mittauskäyrä"
               ></canvas>
-              <p id="empty-temperature" class="chart-empty">
-                Historia kertyy tähän mittausten saapuessa.
+              <p
+                id="empty-temperature"
+                class="chart-empty"
+                data-i18n="Historia kertyy tähän mittausten saapuessa."
+              >
+                History will appear here as measurements arrive.
               </p>
             </div>
             <div id="summary-temperature" class="history-summary"></div>
           </section>
           <section class="chart-panel" aria-labelledby="pressure-title">
-            <h3 id="pressure-title">Ilmanpaine <span>hPa</span></h3>
+            <h3 id="pressure-title">
+              <span class="metric-label" data-i18n="Ilmanpaine">Pressure</span>
+              <span>hPa</span>
+            </h3>
             <div class="chart-wrap">
               <canvas
                 id="chart-pressure"
                 role="img"
-                aria-label="Ilmanpaineen mittauskäyrä"
+                aria-label="Pressure chart"
+                data-i18n-aria="Ilmanpaineen mittauskäyrä"
               ></canvas>
-              <p id="empty-pressure" class="chart-empty">
-                Historia kertyy tähän mittausten saapuessa.
+              <p
+                id="empty-pressure"
+                class="chart-empty"
+                data-i18n="Historia kertyy tähän mittausten saapuessa."
+              >
+                History will appear here as measurements arrive.
               </p>
             </div>
             <div id="summary-pressure" class="history-summary"></div>
           </section>
         </div>
-        <p class="muted">
-          Historia tallentuu 30 sekunnin välein ja säilyy 30 päivää. Katkot
-          näkyvät käyrän aukkoina.
+        <p
+          class="muted"
+          data-i18n="Historia tallentuu 30 sekunnin välein ja säilyy 30 päivää. Katkot näkyvät käyrän aukkoina."
+        >
+          History is recorded every 30 seconds and kept for 30 days. Missing
+          readings appear as gaps in the charts.
         </p>
       </section>
       <footer>RuuviTag → Windows → Home Assistant</footer>
@@ -116,26 +182,39 @@
     <dialog id="settings-dialog">
       <form id="settings-form">
         <div class="section-title">
-          <h2>Asetukset</h2>
-          <button type="button" id="settings-close" class="secondary">
-            Sulje
+          <h2 data-i18n="Asetukset">Settings</h2>
+          <button
+            type="button"
+            id="settings-close"
+            class="secondary"
+            data-i18n="Sulje"
+          >
+            Close
           </button>
         </div>
+        <label
+          ><span data-i18n="Kieli">Language</span
+          ><select id="language">
+            <option value="en">English</option>
+            <option value="fi">Suomi</option>
+          </select></label
+        >
         <fieldset>
           <legend>Home Assistant / MQTT</legend>
           <label class="check"
-            ><input id="mqtt-enabled" type="checkbox" /> Lähetä valittujen
-            anturien mittaukset</label
+            ><input id="mqtt-enabled" type="checkbox" /><span
+              data-i18n="Lähetä valittujen anturien mittaukset"
+              >Publish measurements from selected sensors</span
+            ></label
           >
           <div class="two-columns">
             <label
-              >Palvelimen osoite<input
-                id="mqtt-host"
-                required
-                value="127.0.0.1"
-                maxlength="253" /></label
-            ><label
-              >Portti<input
+              ><span data-i18n="Palvelimen osoite">Broker address</span
+              ><input id="mqtt-host" required value="127.0.0.1" maxlength="253"
+            /></label>
+            <label
+              ><span data-i18n="Portti">Port</span
+              ><input
                 id="mqtt-port"
                 type="number"
                 min="1"
@@ -146,77 +225,111 @@
           </div>
           <div class="two-columns">
             <label
-              >Käyttäjätunnus<input
-                id="mqtt-username"
-                autocomplete="username" /></label
-            ><label
-              >Salasana<input
+              ><span data-i18n="Käyttäjätunnus">Username</span
+              ><input id="mqtt-username" autocomplete="username"
+            /></label>
+            <label
+              ><span data-i18n="Salasana">Password</span
+              ><input
                 id="mqtt-password"
                 type="password"
                 autocomplete="new-password"
-                placeholder="Ei salasanaa"
+                placeholder="No password"
             /></label>
           </div>
           <label class="check"
-            ><input id="clear-password" type="checkbox" /> Poista tallennettu
-            salasana</label
-          ><label class="check"
-            ><input id="mqtt-tls" type="checkbox" /> Salattu yhteys (TLS)</label
+            ><input id="clear-password" type="checkbox" /><span
+              data-i18n="Poista tallennettu salasana"
+              >Clear saved password</span
+            ></label
           >
-          <p class="muted">
-            Home Assistant löytää valitut anturit MQTT-integraation kautta.
-            Molempien on käytettävä samaa MQTT-palvelinta.
+          <label class="check"
+            ><input id="mqtt-tls" type="checkbox" /><span
+              data-i18n="Salattu yhteys (TLS)"
+              >Encrypted connection (TLS)</span
+            ></label
+          >
+          <p
+            class="muted"
+            data-i18n="Home Assistant löytää valitut anturit MQTT-integraation kautta. Molempien on käytettävä samaa MQTT-palvelinta."
+          >
+            Home Assistant discovers selected sensors through its MQTT
+            integration. Both must use the same MQTT broker.
           </p>
         </fieldset>
         <fieldset>
           <legend>Windows</legend>
           <div class="two-columns">
             <label
-              >Kellon vieressä näkyvä anturi<select id="tray-tag">
-                <option value="">Ei valintaa</option>
+              ><span data-i18n="Kellon vieressä näkyvä anturi">Tray sensor</span
+              ><select id="tray-tag">
+                <option value="" data-i18n="Ei valintaa">None selected</option>
               </select></label
-            ><label
-              >Kuvakkeen lukema<select id="tray-metric">
-                <option value="humidity">Kosteus (%)</option>
-                <option value="temperature">Lämpötila (°C)</option>
+            >
+            <label
+              ><span data-i18n="Kuvakkeen lukema">Tray reading</span
+              ><select id="tray-metric">
+                <option value="humidity" data-i18n="Kosteus (%)">
+                  Humidity (%)
+                </option>
+                <option value="temperature" data-i18n="Lämpötila (°C)">
+                  Temperature (°C)
+                </option>
               </select></label
             >
           </div>
-          <p class="muted">
-            Kuvake näyttää kokonaisluvun. Napsautus avaa mittaukset ja
-            historian.
+          <p
+            class="muted"
+            data-i18n="Kuvake näyttää kokonaisluvun. Napsautus avaa mittaukset ja historian."
+          >
+            The icon shows a whole number. Click it to open measurements and
+            history.
           </p>
           <label class="check"
-            ><input id="autostart" type="checkbox" /> Käynnistä Windowsiin
-            kirjautuessa</label
+            ><input id="autostart" type="checkbox" /><span
+              data-i18n="Käynnistä Windowsiin kirjautuessa"
+              >Start when signing in to Windows</span
+            ></label
           >
         </fieldset>
         <p id="settings-feedback" role="status"></p>
-        <button type="submit">Tallenna asetukset</button>
+        <button type="submit" data-i18n="Tallenna asetukset">
+          Save settings
+        </button>
       </form>
     </dialog>
     <dialog id="tag-dialog">
       <form id="tag-form">
-        <h2 id="tag-dialog-title">Ota anturi seurantaan</h2>
+        <h2 id="tag-dialog-title" data-i18n="Ota anturi seurantaan">
+          Track sensor
+        </h2>
         <p id="tag-address" class="muted"></p>
         <label
-          >Anturin nimi<input
-            id="tag-name"
-            required
-            maxlength="60"
-            autocomplete="off" /></label
-        ><label class="check"
-          ><input id="tag-enabled" type="checkbox" checked /> Tallenna historia
-          ja lähetä MQTT:llä</label
+          ><span data-i18n="Anturin nimi">Sensor name</span
+          ><input id="tag-name" required maxlength="60" autocomplete="off"
+        /></label>
+        <label class="check"
+          ><input id="tag-enabled" type="checkbox" checked /><span
+            data-i18n="Tallenna historia ja lähetä MQTT:llä"
+            >Record history and publish over MQTT</span
+          ></label
         >
-        <p class="muted">
-          Valitse vain oma anturisi. Nimi näkyy myös Home Assistantissa.
+        <p
+          class="muted"
+          data-i18n="Valitse vain oma anturisi. Nimi näkyy myös Home Assistantissa."
+        >
+          Select only your own sensor. Its name also appears in Home Assistant.
         </p>
         <p id="tag-feedback" role="status"></p>
         <div class="actions">
-          <button type="submit">Tallenna</button
-          ><button id="tag-cancel" type="button" class="secondary">
-            Peruuta
+          <button type="submit" data-i18n="Tallenna">Save</button>
+          <button
+            id="tag-cancel"
+            type="button"
+            class="secondary"
+            data-i18n="Peruuta"
+          >
+            Cancel
           </button>
         </div>
       </form>
