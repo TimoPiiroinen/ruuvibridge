@@ -19,7 +19,7 @@ forward selected sensors to Home Assistant over MQTT.
 ## Screenshots
 
 English UI shown with synthetic demo data only. The sensor name, address, and
-measurements are fictional; no personal data or credentials are shown.
+measurements are fictional.
 
 ![Desktop UI with sensor readings and three history charts](docs/screenshots/desktop.png)
 
